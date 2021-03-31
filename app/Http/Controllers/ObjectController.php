@@ -8,6 +8,7 @@ use App\Models\ObjectValue;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Exception;
+use Illuminate\Support\Facades\Validator;
 
 class ObjectController extends Controller {
 
@@ -18,11 +19,11 @@ class ObjectController extends Controller {
 
             foreach ($data as $key => $value) {
                 ObjectModel::firstOrCreate([
-                    'key' => $key
+                    'key' => trim($key)
                 ]);
                 ObjectValue::firstOrCreate([
-                    'object_key' => $key,
-                    'value'      => $value
+                    'object_key' => trim($key),
+                    'value'      => trim($value)
                 ]);
             }
 
