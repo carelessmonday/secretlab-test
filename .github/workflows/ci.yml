@@ -20,5 +20,8 @@ jobs:
         run: |
           mkdir -p database
           touch database/testdb.sqlite
+      - name: Run Migration
+        run: |
+          php artisan migration --database=sqlite
       - name: Run Testsuite
         run: vendor/bin/phpunit tests/
