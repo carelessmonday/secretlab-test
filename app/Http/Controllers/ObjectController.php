@@ -35,15 +35,18 @@ class ObjectController extends Controller {
 
     public function show(string $key, GetObjectRequest $request)
     {
-        $value = (new ObjectValue)->where('object_key', $key);
-
         if ($request->get('timestamp')) {
-            $value = $value->where(
-                'created_at', '>=',
-                Carbon::createFromTimestamp((int) $request->get('timestamp'))
-            )->first();
+            $result = (new ObjectValue)->where('object_key', $key)
+                ->where(
+                    'updated_at', '<=',
+                    Carbon::createFromTimestamp((int) $request->get('timestamp'))
+                )->latest()->first();
+            $value = $result ?: (new ObjectValue)
+                ->where('object_key', $key)
+                ->latest()
+                ->first();
         } else {
-            $value = $value->latest()->first();
+            $value = (new ObjectValue)->where('object_key', $key)->latest()->first();
         }
 
         abort_if($value === NULL, 404);
@@ -57,8 +60,9 @@ class ObjectController extends Controller {
             ->get()
             ->map(function ($item) {
                 return [
-                    'key'   => $item->key,
-                    'value' => $item->latestValue->value
+                    'key'       => $item->key,
+                    'value'     => $item->latestValue->value,
+                    'timestamp' => $item->latestValue->updated_at->unix()
                 ];
             });
     }
