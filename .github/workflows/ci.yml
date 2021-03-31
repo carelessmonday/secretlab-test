@@ -25,3 +25,5 @@ jobs:
           php artisan migrate --database=sqlite
       - name: Run Testsuite
         run: vendor/bin/phpunit tests/
+      - name: Deploy to Server
+        run: curl ${{ secrets.FORGE_DEPLOYMENT_WEBHOOK }}
