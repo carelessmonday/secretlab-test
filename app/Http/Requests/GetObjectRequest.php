@@ -11,10 +11,16 @@ class GetObjectRequest extends FormRequest {
         return TRUE;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge(['key' => $this->route('key')]);
+    }
+
     public function rules(): array
     {
         return [
-            'timestamp' => "sometimes|numeric"
+            'timestamp' => 'sometimes|numeric',
+            'key'       => 'required|bail|string|alpha_dash|min:3|max:50'
         ];
     }
 }

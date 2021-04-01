@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,5 +35,22 @@ class ObjectValue extends Model {
     public function objectModel(): BelongsTo
     {
         return $this->belongsTo(ObjectModel::class, 'object_key', 'key');
+    }
+
+    public static function byTimestamp(string $key, int $timestamp)
+    {
+        return (new static())
+            ->where('object_key', $key)
+            ->where('updated_at', '<=', Carbon::createFromTimestamp($timestamp))
+            ->latest()
+            ->first();
+    }
+
+    public static function getLatest(string $key)
+    {
+        return (new static())
+            ->where('object_key', $key)
+            ->latest()
+            ->first();
     }
 }

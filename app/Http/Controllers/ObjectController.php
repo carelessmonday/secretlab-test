@@ -3,27 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\GetObjectRequest;
+use App\Http\Requests\StoreObjectRequest;
+use App\Http\Resources\ObjectCollection;
+use App\Http\Resources\ObjectResource;
 use App\Models\ObjectModel;
 use App\Models\ObjectValue;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Exception;
-use Illuminate\Support\Facades\Validator;
 
 class ObjectController extends Controller {
 
-    public function store(Request $request)
+    public function store(StoreObjectRequest $request)
     {
-        try {
-            $data = json_decode((string) $request->getContent(), TRUE, 512, JSON_THROW_ON_ERROR);
+        $data = $request->validated()['objects'];
 
+        try {
             foreach ($data as $key => $value) {
                 ObjectModel::firstOrCreate([
-                    'key' => trim($key)
+                    'key' => $key
                 ]);
                 ObjectValue::firstOrCreate([
-                    'object_key' => trim($key),
-                    'value'      => trim($value)
+                    'object_key' => $key,
+                    'value'      => $value
                 ]);
             }
 
@@ -36,34 +36,21 @@ class ObjectController extends Controller {
     public function show(string $key, GetObjectRequest $request)
     {
         if ($request->get('timestamp')) {
-            $result = (new ObjectValue)->where('object_key', $key)
-                ->where(
-                    'updated_at', '<=',
-                    Carbon::createFromTimestamp((int) $request->get('timestamp'))
-                )->latest()->first();
-            $value = $result ?: (new ObjectValue)
-                ->where('object_key', $key)
-                ->latest()
-                ->first();
+            $result = ObjectValue::byTimestamp($key, (int) $request->get('timestamp'));
+            $value = $result ?: ObjectValue::getLatest($key);
         } else {
-            $value = (new ObjectValue)->where('object_key', $key)->latest()->first();
+            $value = ObjectValue::getLatest($key);
         }
 
-        abort_if($value === NULL, 404);
+        if (!$value) {
+            return response()->json(['message' => 'Resource not found.'], 404);
+        }
 
-        return $value->value;
+        return new ObjectResource($value);
     }
 
     public function index()
     {
-        return ObjectModel::with('latestValue')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'key'       => $item->key,
-                    'value'     => $item->latestValue->value,
-                    'timestamp' => $item->latestValue->updated_at->unix()
-                ];
-            });
+        return new ObjectCollection(ObjectModel::with('latestValue')->get());
     }
 }
