@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\GetObjectRequest;
 use App\Http\Requests\StoreObjectRequest;
 use App\Http\Resources\ObjectCollection;
+use App\Http\Resources\ObjectLatestOnlyCollection;
 use App\Http\Resources\ObjectResource;
 use App\Models\ObjectModel;
 use App\Models\ObjectValue;
@@ -47,8 +48,13 @@ class ObjectController extends Controller {
         return new ObjectResource($value);
     }
 
+    public function latest()
+    {
+        return new ObjectLatestOnlyCollection(ObjectModel::with('latestValue')->paginate());
+    }
+
     public function index()
     {
-        return new ObjectCollection(ObjectModel::with('latestValue')->get());
+        return new ObjectCollection((new ObjectValue)->paginate());
     }
 }
