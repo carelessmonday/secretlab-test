@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
+use Exception;
 
 /**
  * @property string $id
@@ -32,6 +33,15 @@ class ObjectValue extends Model {
         });
     }
 
+    public function getValueAttribute($value)
+    {
+        try {
+            return json_decode($value, TRUE, 512, JSON_THROW_ON_ERROR);
+        } catch (Exception $exception) {
+            return $value;
+        }
+    }
+
     public function objectModel(): BelongsTo
     {
         return $this->belongsTo(ObjectModel::class, 'object_key', 'key');
@@ -52,5 +62,28 @@ class ObjectValue extends Model {
             ->where('object_key', $key)
             ->latest()
             ->first();
+    }
+
+    public static function createOrUpdate(string $key, $inputValue): self
+    {
+        $value = is_array($inputValue)
+            ? json_encode($inputValue, JSON_THROW_ON_ERROR)
+            : $inputValue;
+
+        $object = (new static)
+            ->where('object_key', $key)
+            ->where('value', $value)
+            ->first();
+
+        if ($object === NULL) {
+            return self::create([
+                'object_key' => $key,
+                'value'      => $value
+            ]);
+        }
+
+        $object->touch();
+
+        return $object;
     }
 }

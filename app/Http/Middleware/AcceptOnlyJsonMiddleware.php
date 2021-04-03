@@ -21,16 +21,10 @@ class AcceptOnlyJsonMiddleware {
         }
 
         try {
-            $objects = json_decode($request->getContent(), TRUE, 512, JSON_THROW_ON_ERROR);
-            $keys = array_keys($objects);
+            json_decode($request->getContent(), TRUE, 512, JSON_THROW_ON_ERROR);
         } catch (Exception $exception) {
             return response()->json(['message' => $exception->getMessage()], 406);
         }
-
-        $request->merge([
-            'objects'     => $objects,
-            'object_keys' => $keys
-        ]);
 
         return $next($request);
     }

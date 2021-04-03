@@ -92,4 +92,24 @@ class ObjectGetTest extends TestCase {
             ->assertJsonCount(count($data), 'data')
             ->assertJsonStructure(['data' => []]);
     }
+
+    public function test_returns_decoded_json_value()
+    {
+        $key = 'testkey';
+        $value = [
+            'this' => 'will a be a json string',
+            'and'  => [
+                'lets'    => 'add more values',
+                'numbers' => 1234
+            ]
+        ];
+        $this->postJson('/api/object', [
+            $key => $value
+        ]);
+        $response = $this->getJson("/api/object/{$key}");
+        $response->assertStatus(200)
+            ->assertJsonFragment([
+                'value' => $value
+            ]);
+    }
 }

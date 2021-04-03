@@ -14,33 +14,31 @@ class ObjectController extends Controller {
 
     public function store(StoreObjectRequest $request)
     {
-        $data = $request->validated()['objects'];
+        $objects = $request->validated()['objects'];
 
         try {
-            foreach ($data as $key => $value) {
+            foreach ($objects as $key => $value) {
                 ObjectModel::firstOrCreate([
                     'key' => $key
                 ]);
-                ObjectValue::firstOrCreate([
-                    'object_key' => $key,
-                    'value'      => $value
-                ]);
+                ObjectValue::createOrUpdate($key, $value);
             }
 
             return ['success' => TRUE];
         } catch (Exception $exception) {
-            return ['success' => FALSE];
+            return ['success' => FALSE, 'message' => $exception->getMessage()];
         }
     }
 
     public function show(string $key, GetObjectRequest $request)
     {
+        $result = NULL;
+
         if ($request->get('timestamp')) {
             $result = ObjectValue::byTimestamp($key, (int) $request->get('timestamp'));
-            $value = $result ?: ObjectValue::getLatest($key);
-        } else {
-            $value = ObjectValue::getLatest($key);
         }
+
+        $value = $result ?: ObjectValue::getLatest($key);
 
         if (!$value) {
             return response()->json(['message' => 'Resource not found.'], 404);
