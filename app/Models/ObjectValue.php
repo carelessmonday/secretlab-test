@@ -47,8 +47,12 @@ class ObjectValue extends Model {
         return $this->belongsTo(ObjectModel::class, 'object_key', 'key');
     }
 
-    public static function byTimestamp(string $key, int $timestamp)
+    public static function byTimestamp(string $key, ?int $timestamp)
     {
+        if (!$timestamp) {
+            return NULL;
+        }
+
         return (new static())
             ->where('object_key', $key)
             ->where('updated_at', '<=', Carbon::createFromTimestamp($timestamp))

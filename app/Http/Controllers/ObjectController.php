@@ -33,15 +33,13 @@ class ObjectController extends Controller {
 
     public function show(string $key, GetObjectRequest $request)
     {
-        $result = NULL;
+        $byTimestamp = ObjectValue::byTimestamp($key, $request->get('timestamp'));
 
-        if ($request->get('timestamp')) {
-            $result = ObjectValue::byTimestamp($key, (int) $request->get('timestamp'));
+        if (!$byTimestamp && $request->get('timestamp')) {
+            return response()->json(['message' => 'Resource not found.'], 404);
         }
 
-        $value = $result ?: ObjectValue::getLatest($key);
-
-        if (!$value) {
+        if (!$value = ObjectValue::getLatest($key)) {
             return response()->json(['message' => 'Resource not found.'], 404);
         }
 
